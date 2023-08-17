@@ -1,32 +1,18 @@
-# -*- coding: utf-8 -*-
-"""
-Spyder Editor
 
-This is a temporary script file.
-"""
-import pickle
 import pandas as pd
-import numpy as np
 from imblearn.over_sampling import SMOTE
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import cross_val_score
-from sklearn.model_selection import RepeatedStratifiedKFold
 import streamlit as st
 
-MODEL_PATH = "final_model.pkl"
-with open(MODEL_PATH, "rb") as file:
-    model = pickle.load(file)
 
-with open("normalizer.pkl", "rb") as file:
-    normalizer = pickle.load(file)
 
 
 if __name__ == "__main__":
     st.title("Myocardial Infarction Prediction")
     AGE = st.sidebar.number_input("Insert the Age")
     SEX=st.selectbox("Gender", ["0:Female", "1:Male"], index=0)
-    INF_ANAM=st.selectbox("Quantity of myocardial infarctions",["0:Zero, 1:, 2:Two, 3: Three or more], index=0)
+    INF_ANAM=st.selectbox("Quantity of myocardial infarctions",["0:Zero", "1:One", "2:Two", "3: Three or more"], index=0)
     STENOK_AN=st.selectbox("Exertional angina pectoris",  ["0: never"," 1: During the last year", "2: one year ago", "3: two years ago", "4: three years ago", "5: 4-5 years ago"], index=0)
     FK_STENOK=st.selectbox("Functional class (FC) of angina pectoris in the last year",  ["0: there is no angina pectoris", "1: I FC", "2:   II FC", "3: III FC", "4: IV FC"], index=0)
     IBS_POST=st.selectbox("Coronary heart disease (CHD) in recent weeks, days before admission to hospital",
@@ -51,7 +37,7 @@ if __name__ == "__main__":
     lat_im=st.selectbox("Presence of a lateral myocardial infarction (left ventricular) (ECG changes in leads V5: V6 , I, AVL)", ["0: there is no infarct in this location"," 1: QRS has no changes", "2: QRS is like QR-complex", "3: QRS is like Qr-complex", "4: QRS is like QS-complex"], index=0)
     inf_im=st.selectbox("Presence of an inferior myocardial infarction (left ventricular) (ECG changes in leads III, AVF, II)", ["0: there is no infarct in this location"," 1: QRS has no changes", "2: QRS is like QR-complex", "3: QRS is like Qr-complex", "4: QRS is like QS-complex"], index=0)
     post_im=st.selectbox("Presence of a posterior myocardial infarction (left ventricular) (ECG changes in V7: V9, reciprocity changes in leads V1 – V3)",
-            [["0: there is no infarct in this location"," 1: QRS has no changes", "2: QRS is like QR-complex", "3: QRS is like Qr-complex", "4: QRS is like QS-complex"], index=0))
+            ["0: there is no infarct in this location"," 1: QRS has no changes", "2: QRS is like QR-complex", "3: QRS is like Qr-complex", "4: QRS is like QS-complex"], index=0)
     IM_PG_P=st.selectbox(
             "Presence of a right ventricular myocardial infarction", ["0:No", "1:Yes"], index=0)
     ritm_ecg_p_01=st.selectbox(
@@ -79,17 +65,61 @@ if __name__ == "__main__":
 
 
 # Missing Value Imputation
-df_fillna = df.apply(lambda x: x.fillna(x.mode().iloc[0]))
+df_f = df.apply(lambda x: x.fillna(x.mode().iloc[0]))
              
-# Model smote
+# Split the data set
+X = df_f.drop('LET_IS', axis=1)
+Y = df_f['LET_IS']
 
-    
+
+# split into train and test sets
+X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.33, random_state=42, stratify=Y)
+
+# Check the class distribution
+class_counts = Y_train.value_counts()
+# Set the desired number of neighbors for SMOTE
+k_neighbors = min(class_counts.min() - 1, 4)  # Use at most class counts - 1
+
+# Check if there are enough samples for SMOTE
+if k_neighbors < 2:
+    print("Not enough samples in the minority class for SMOTE.")
+else:
+    # Create the SMOTE oversampler
+    oversampler = SMOTE(random_state=42, k_neighbors=k_neighbors)
+
+# Perform oversampling on the cleaned dataset
+X_trainS, Y_trainS = oversampler.fit_resample(X_train, Y_train)
+
+
+# Model build
+# Define the model
+model = RandomForestClassifier(
+    n_estimators=100, random_state=42)
+
+
+# Fit the model
+model.fit(X_trainS, Y_trainS)
+predict = model.predict(X_test)
         
-             
+       
+
+st.subheader('Predict')
+st.write(predict)
+if(predict == 0):
+    st.write('lethal outcome - :green[unknown (Alive)]')
+elif(predict == 1):
+    st.write('lethal outcome - :red[Cardiogenic Shock]')
+elif(predict == 2):
+    st.write('lethal outcome - :red[Pulmonary Edema]')
+elif(predict == 3):
+    st.write('lethal outcome - :red[Myocardial Rupture]') 
+elif(predict == 4):
+    st.write('lethal outcome - :red[Progress of Congestive Heart Failure]')
+elif(predict == 5):
+    st.write('lethal outcome - :red[Thromboembolism]')
+elif(predict == 6):
+    st.write('lethal outcome - :red[Asystole]')
+elif(predict == 7):
+    st.write('lethal outcome - :red[ventricular fibrillation]')
 
 
-    if st.button("Predict"):
-        if model.predict(input_df)==1:
-            st.title("Likely to Churn")
-        else:
-            st.title("Not Likely to Churn")
