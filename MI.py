@@ -1,6 +1,6 @@
 import pickle
 import pandas as pd
-from sklearn import preprocessing
+#from sklearn import preprocessing
 import streamlit as st
 
 model=pickle.load(open('MI_model.pkl','rb'))
