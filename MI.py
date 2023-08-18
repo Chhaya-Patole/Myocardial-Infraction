@@ -3,7 +3,9 @@ import pandas as pd
 #from sklearn import preprocessing
 import streamlit as st
 
-model=pickle.load(open('MI_model.pkl','rb'))
+MODEL_PATH = "MI_model.pkl"
+with open(MODEL_PATH, "rb") as file:
+    model = pickle.load(file)
 
 if __name__ == "__main__":
     st.title("Myocardial Infarction Prediction with ML")
