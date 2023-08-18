@@ -1,6 +1,6 @@
 import pickle
 import pandas as pd
-#from sklearn import preprocessing
+from sklearn import preprocessing
 import streamlit as st
 
 MODEL_PATH = "MI_model.pkl"
@@ -63,58 +63,53 @@ if __name__ == "__main__":
     df=pd.DataFrame(columns=['SEX', 'INF_ANAM', 'STENOK_AN', 'FK_STENOK', 'IBS_POST', 'GB', 'nr_02', 'nr_07', 'endocr_02', 'zab_leg_02', 'lat_im', 'inf_im', 'post_im', 'IM_PG_P', 'ritm_ecg_p_01', 'ritm_ecg_p_02', 'n_r_ecg_p_02', 'n_r_ecg_p_08', 'GIPO_K', 'TIME_B_S', 'NOT_NA_1_n', 'RAZRIV'])
 
 
-# Missing Value Imputation
-df_f = df.apply(lambda x: x.fillna(x.mode().iloc[0]))
+    # Missing Value Imputation
+    df_f = df.apply(lambda x: x.fillna(x.mode().iloc[0]))
 
 
-# separate numeric and categorical columns
-numeric=df_f[['AGE','S_AD_ORIT', 'D_AD_ORIT', 'K_BLOOD','NA_BLOOD','ALT_BLOOD','AST_BLOOD','L_BLOOD','ROE']]
-categorical_columns=[]
-for i in df_f:
-    if i not in numeric:
-        categorical_columns.append(i)
+    # separate numeric and categorical columns
+    numeric=df_f[['AGE','S_AD_ORIT', 'D_AD_ORIT', 'K_BLOOD','NA_BLOOD','ALT_BLOOD','AST_BLOOD','L_BLOOD','ROE']]
+    categorical_columns=[]
+    for i in df_f:
+        if i not in numeric:
+            categorical_columns.append(i)
         
-categorical_data = df_f[categorical_columns]
+    categorical_data = df_f[categorical_columns]
              
-# Normalise the data
-column_name=numeric.columns
-scaler=preprocessing.MinMaxScaler()
-numeric_norm=scaler.fit_transform(numeric)
-numeric_norm=pd.DataFrame(numeric_norm,columns=column_name)
+    # Normalise the data
+    column_name=numeric.columns
+    scaler=preprocessing.MinMaxScaler()
+    numeric_norm=scaler.fit_transform(numeric)
+    numeric_norm=pd.DataFrame(numeric_norm,columns=column_name)
 
+     # Code for Prediction
+    Outcome = ''
 
-# best feature
+    # Creating a button for Prediction
+    if st.button("Prediction"):
+        X = [SEX, INF_ANAM, STENOK_AN, FK_STENOK, IBS_POST, GB, nr, endocr_02, zab_leg_02, lat_im, inf_im,
+             post_im, IM_PG_P, ritm_ecg_p_01, ritm_ecg_p_02, n_r_ecg_p_02, n_r_ecg_p_08, GIPO_K, TIME_B_S, NOT_NA_1_n, RAZRIV]
 
-X=df_f['SEX', 'INF_ANAM', 'STENOK_AN', 'FK_STENOK', 'IBS_POST', 'GB', 'nr_02', 'nr_07', 'endocr_02', 'zab_leg_02', 'lat_im', 'inf_im', 'post_im', 'IM_PG_P', 'ritm_ecg_p_01', 'ritm_ecg_p_02', 'n_r_ecg_p_02', 'n_r_ecg_p_08', 'GIPO_K', 'TIME_B_S', 'NOT_NA_1_n', 'RAZRIV']
+        MI_prediction = model.predict([X])
 
+        if MI_prediction == 0:
+            Outcome = "Unknown Cause (Alive)"
+        elif MI_prediction == 1:
+            Outcome = "Cardiogenic Shock"
+        elif MI_prediction == 2:
+            Outcome = "Pulmonary Edema"
+        elif MI_prediction == 3:
+            Outcome = "Myocardial Rupture"
+        elif MI_prediction == 4:
+            Outcome = "Progress of Congestive Heart Failure"
+        elif MI_prediction == 5:
+            Outcome = "Thromboembolism"
+        elif MI_prediction == 6:
+            Outcome = "Asystole"
+        elif MI_prediction == 7:
+            Outcome = "Ventricular Fibrillation"
 
-           
-             
-# # code for Prediction
-Outcome= ''
-    
-# creating a button for Prediction    
-if st.button("Prediction"):
-   MI_prediction = model.predict([X]) 
-        
-   if (MI_prediction == 0):
-       Outcome = "Unknown Cause (Alive)"
-   elif(MI_prediction==1):
-       Outcome = "Cardiogenic Shock"
-   elif(MI_prediction==2):
-       Outcome = "Pulmonary Edema"
-   elif(MI_prediction==3):
-       Outcome = "Myocardial Rupture"
-   elif(MI_prediction==4):
-       Outcome = "Progress of Congestive Heart Failure"
-   elif(MI_prediction==5):
-       Outcome = "Thromboembolism"
-   elif(MI_prediction==6):
-       Outcome = "Asystole"
-   elif(MI_prediction==7):
-       Outcome = "Ventricular Fibrillation"
-        
-st.success(MI_prediction)
+    st.success(Outcome)
 
 
 
